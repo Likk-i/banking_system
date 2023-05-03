@@ -83,6 +83,34 @@ CREATE TABLE Transaction
     CONSTRAINT reciever FOREIGN KEY (reciever_id)
     REFERENCES customer (cust_id)
 );
+create table login(
+   username varchar(100) primary key,
+   id int ,
+   password varchar(100) not null
+
+   
+);
+
+--roles for customer--not checked
+CREATE OR REPLACE FUNCTION create_view_cust_details(uname VARCHAR(100), pword VARCHAR(100))
+RETURNS void
+AS $create_view_cust_details$
+DECLARE
+    log_id INT;
+    c_name VARCHAR(100);
+BEGIN
+      IF EXISTS (SELECT id FROM login WHERE username = uname AND password = pword) THEN
+       SELECT id INTO log_id FROM login WHERE username = uname AND password = pword;
+       EXECUTE 'CREATE OR REPLACE VIEW customer_view AS (SELECT cust_name, cust_address,  cust_phoneno FROM (customer NATURAL JOIN customer_phoneno) WHERE customer.id = '||log_id||')';
+       SELECT cust_name INTO c_name FROM customer WHERE id = log_id;
+       EXECUTE 'GRANT SELECT ON customer_view TO "'||c_name||'"';
+       RAISE NOTICE 'Temporary view called "customer_view" for customer has been created!';
+    ELSE
+       RAISE NOTICE 'Customer does not exist in database. Check username and password!';
+    END IF;
+END;
+$create_view_cust_details$ LANGUAGE plpgsql
+SECURITY DEFINER;
 -- function
 CREATE OR REPLACE FUNCTION view_balance(id int)
 RETURNS numeric(12,3)
@@ -122,14 +150,14 @@ begin
        END IF;
    END;$$;
    
-  ----views
+  --views
   
 CREATE VIEW loan_payment AS 
 SELECT loan.loan_id, payment.loan_id, loan.amount AS amount
 FROM loan
 JOIN payment ON loan.loan_id = payment.loan_id
 
----------------
+---------
 WHERE loan.amount >= 10000;
 create VIEW loan_account
 (
@@ -172,14 +200,7 @@ select  cust_name,loan.amount as Amount
 from customer inner join loan
 where loan.account_no=customer.account_no;
 --dummy data insertion and code generation for login okkk
- create table login(
-   id varchar(100) primary key,
-   password text not null
-
-   
-);
-INSERT INTO login (id, password)
-VALUES ('1', 'password1'), ('2', 'password2');
+ 
  
 
 
