@@ -110,7 +110,23 @@ BEGIN
     END IF;
 END;
 $create_view_cust_details$ LANGUAGE plpgsql
-SECURITY DEFINER;
+--role 
+CREATE FUNCTION create_customer_view(cust_nam INT)
+RETURNS VOID AS $$
+BEGIN
+   if exits (select cust_name from customer where cust_name =cust_nam ) then
+    EXECUTE 'CREATE OR REPLACE VIEW customer_view AS
+    SELECT cust_id, cust_name, cust_address, cust_phoneno, account_no
+    FROM customer
+    WHERE cust_id = ' || cust_id||';
+    RAISE NOTICE 'view has been created';
+   else 
+    raise NOTICE 'customer doesn't exsits';
+   end if;
+END;
+$$ LANGUAGE plpgsql;
+
+
 -- function
 CREATE OR REPLACE FUNCTION view_balance(id int)
 RETURNS numeric(12,3)
