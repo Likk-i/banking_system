@@ -61,6 +61,8 @@ CREATE TABLE customer(
     CONSTRAINT account_fk FOREIGN KEY (account_no)
     REFERENCES account (account_no)
 );
+
+--payment table
 CREATE TABLE payment
 (
     loan_interest int NOT NULL,
@@ -71,6 +73,8 @@ CREATE TABLE payment
     CONSTRAINT loan_fk FOREIGN KEY (loan_id)
     REFERENCES loan(loan_id)
 );
+
+--transaction table
 CREATE TABLE Transaction
 (
     Transaction_id SERIAL PRIMARY KEY,
@@ -83,6 +87,8 @@ CREATE TABLE Transaction
     CONSTRAINT reciever FOREIGN KEY (reciever_id)
     REFERENCES customer (cust_id)
 );
+
+--login table
 create table login(
    username varchar(100) primary key,
    id int ,
@@ -91,23 +97,25 @@ create table login(
    
 );
 
-
---role for customer
-CREATE FUNCTION create_customer_view(cust_nam INT)
-RETURNS VOID AS $$
+--roles for customer--not checked
+CREATE OR REPLACE FUNCTION create_view_cust_details(uname VARCHAR(100), pword VARCHAR(100))
+RETURNS void
+AS $create_view_cust_details$
+DECLARE
+    log_id INT;
+    c_name VARCHAR(100);
 BEGIN
-   if exits (select cust_name from customer where cust_name =cust_nam ) then
-    EXECUTE 'CREATE OR REPLACE VIEW customer_view AS
-    SELECT cust_id, cust_name, cust_address, cust_phoneno, account_no
-    FROM customer
-    WHERE cust_id = ' || cust_id||';
-    RAISE NOTICE 'view has been created';
-   else 
-    raise NOTICE 'customer doesn't exsits';
-   end if;
+      IF EXISTS (SELECT id FROM login WHERE username = uname AND password = pword) THEN
+       SELECT id INTO log_id FROM login WHERE username = uname AND password = pword;
+       EXECUTE 'CREATE OR REPLACE VIEW customer_view AS (SELECT cust_name, cust_address,  cust_phoneno FROM (customer NATURAL JOIN customer_phoneno) WHERE customer.id = '||log_id||')';
+       SELECT cust_name INTO c_name FROM customer WHERE id = log_id;
+       EXECUTE 'GRANT SELECT ON customer_view TO "'||c_name||'"';
+       RAISE NOTICE 'Temporary view called "customer_view" for customer has been created!';
+    ELSE
+       RAISE NOTICE 'Customer does not exist in database. Check username and password!';
+    END IF;
 END;
-$$ LANGUAGE plpgsql;
-
+$create_view_cust_details$ LANGUAGE plpgsql
 
 -- function
 CREATE OR REPLACE FUNCTION view_balance(id int)
@@ -125,6 +133,31 @@ BEGIN
     END IF;
 END;
 $$ LANGUAGE plpgsql;
+
+--payment log function between particular dates
+CREATE OR REPLACE FUNCTION show_payment_log(id INT, start_date DATE, end_date DATE, uname VARCHAR(50), pword VARCHAR(50))
+RETURNS TABLE (
+    payment_amount NUMERIC(12, 2),
+    payment_date TIMESTAMP WITHOUT TIME ZONE,
+    interest NUMERIC(4, 2)
+)
+AS $show_payment_log$
+BEGIN
+    IF EXISTS (SELECT login_id FROM access WHERE username = uname AND password = pword) THEN
+    BEGIN
+        IF EXISTS (SELECT loan_id FROM payment WHERE loan_id = id) THEN
+           RETURN QUERY
+           SELECT pay_amount, pay_date, loan_interest FROM payment
+           WHERE loan_id = id AND pay_date BETWEEN start_date AND end_date;
+        ELSE
+           RAISE NOTICE 'Invalid Loan id';
+        END IF;
+    END;
+    ELSE
+        RAISE NOTICE 'Invalid Login';
+    END IF;
+END;
+$show_payment_log$ LANGUAGE plpgsql
 
 --procedure
 CREATE OR REPLACE PROCEDURE withdrawAmount(id int,amt NUMERIC(12,3))
@@ -147,6 +180,37 @@ begin
          RAISE NOTICE 'Account doesnot exist. Check input account number!';
        END IF;
    END;$$;
+   
+CREATE OR REPLACE FUNCTION check_loan_eligibility(customer_id INT)
+RETURNS BOOLEAN AS $$
+DECLARE
+    total_loan_amount DECIMAL;
+    total_loan_count INT;
+    eligible BOOLEAN;
+BEGIN
+    -- Calculate the total loan amount and count for the given customer
+    SELECT SUM(amount) INTO total_loan_amount
+    FROM Loan
+    WHERE loan_id IN (
+        SELECT loan_id
+        FROM Customer_Loan
+        WHERE cust_id = check_loan_eligibility.customer_id
+    );
+
+    SELECT COUNT(*) INTO total_loan_count
+    FROM Customer_Loan
+    WHERE cust_id = check_loan_eligibility.customer_id;
+
+    -- Check eligibility criteria
+    IF total_loan_amount < 1000000 AND total_loan_count < 5 THEN
+        eligible := TRUE;
+    ELSE
+        eligible := FALSE;
+    END IF;
+
+    RETURN eligible;
+END;
+$$ LANGUAGE plpgsql;
    
   --views
   
