@@ -91,26 +91,8 @@ create table login(
    
 );
 
---roles for customer--not checked
-CREATE OR REPLACE FUNCTION create_view_cust_details(uname VARCHAR(100), pword VARCHAR(100))
-RETURNS void
-AS $create_view_cust_details$
-DECLARE
-    log_id INT;
-    c_name VARCHAR(100);
-BEGIN
-      IF EXISTS (SELECT id FROM login WHERE username = uname AND password = pword) THEN
-       SELECT id INTO log_id FROM login WHERE username = uname AND password = pword;
-       EXECUTE 'CREATE OR REPLACE VIEW customer_view AS (SELECT cust_name, cust_address,  cust_phoneno FROM (customer NATURAL JOIN customer_phoneno) WHERE customer.id = '||log_id||')';
-       SELECT cust_name INTO c_name FROM customer WHERE id = log_id;
-       EXECUTE 'GRANT SELECT ON customer_view TO "'||c_name||'"';
-       RAISE NOTICE 'Temporary view called "customer_view" for customer has been created!';
-    ELSE
-       RAISE NOTICE 'Customer does not exist in database. Check username and password!';
-    END IF;
-END;
-$create_view_cust_details$ LANGUAGE plpgsql
---role 
+
+--role for customer
 CREATE FUNCTION create_customer_view(cust_nam INT)
 RETURNS VOID AS $$
 BEGIN
