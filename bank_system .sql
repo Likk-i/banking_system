@@ -58,6 +58,7 @@ CREATE TABLE customer(
     cust_address TEXT NOT NULL,
     cust_phoneno INT check (cust_phoneno >= 1000000000 AND cust_phoneno <= 9999999999),
     account_no INT NOT NULL,
+    
     CONSTRAINT account_fk FOREIGN KEY (account_no)
     REFERENCES account (account_no)
 );
@@ -81,6 +82,7 @@ CREATE TABLE Transaction
     sender_id INT NOT NULL,
     reciever_id INT NOT NULL,
     payment_date DATE,
+    amount int ,
     payment_method VARCHAR(25) check(payment_method = 'card' or payment_method = 'cash'),
     CONSTRAINT sender FOREIGN KEY (sender_id)
     REFERENCES customer (cust_id),
