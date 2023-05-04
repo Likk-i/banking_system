@@ -56,7 +56,7 @@ CREATE TABLE customer(
     cust_id SERIAL PRIMARY KEY,
     cust_name VARCHAR(100) NOT NULL,
     cust_address TEXT NOT NULL,
-    cust_phoneno INT check (cust_phoneno >= 1000000000 AND cust_phoneno <= 9999999999),
+    cust_phoneno BIGINT check (cust_phoneno >= 1000000000 AND cust_phoneno <= 9999999999),
     account_no BIGINT NOT NULL,
     
     CONSTRAINT account_fk FOREIGN KEY (account_no)
