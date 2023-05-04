@@ -98,6 +98,7 @@ create table login(
 );
 
 --roles for customer--not checked
+--new view for customer
 
 $create_view_cust_details$ LANGUAGE plpgsql
 
