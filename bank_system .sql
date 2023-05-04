@@ -98,24 +98,23 @@ create table login(
 );
 
 --roles for customer--not checked
-CREATE OR REPLACE FUNCTION create_view_cust_details(uname VARCHAR(100), pword VARCHAR(100))
-RETURNS void
-AS $create_view_cust_details$
-DECLARE
-    log_id INT;
-    c_name VARCHAR(100);
-BEGIN
-      IF EXISTS (SELECT id FROM login WHERE username = uname AND password = pword) THEN
-       SELECT id INTO log_id FROM login WHERE username = uname AND password = pword;
-       EXECUTE 'CREATE OR REPLACE VIEW customer_view AS (SELECT cust_name, cust_address,  cust_phoneno FROM (customer NATURAL JOIN customer_phoneno) WHERE customer.id = '||log_id||')';
-       SELECT cust_name INTO c_name FROM customer WHERE id = log_id;
-       EXECUTE 'GRANT SELECT ON customer_view TO "'||c_name||'"';
-       RAISE NOTICE 'Temporary view called "customer_view" for customer has been created!';
-    ELSE
-       RAISE NOTICE 'Customer does not exist in database. Check username and password!';
-    END IF;
-END;
+
 $create_view_cust_details$ LANGUAGE plpgsql
+
+CREATE FUNCTION create_customer_view(cust_nam VARCHAR(100))
+RETURNS VOID AS $$
+BEGIN
+   IF EXISTS (SELECT cust_name FROM customer WHERE cust_name = cust_nam) THEN
+      EXECUTE 'CREATE OR REPLACE VIEW customer_view AS
+      SELECT cust_id, cust_name, cust_address, cust_phoneno, account_no
+      FROM customer
+      WHERE cust_name = "'|| cust_nam ||'"';
+      RAISE NOTICE 'View has been created';
+   ELSE 
+      RAISE NOTICE 'Customer does not exist';
+   END IF;
+END;
+$$ LANGUAGE plpgsql;
 
 -- function
 CREATE OR REPLACE FUNCTION view_balance(id int)
@@ -263,8 +262,7 @@ from customer inner join loan
 where loan.account_no=customer.account_no;
 --dummy data insertion and code generation for login okkk
  
- 
+ --trigger for tracnsaction fucntopm and customer traction set zero
+ --login to password when inserted role and this
 
-
-
-        
+      
