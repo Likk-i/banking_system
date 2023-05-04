@@ -29,7 +29,7 @@ CREATE TABLE employee(
 
 -- account table
 CREATE TABLE account(
-    account_no SERIAL PRIMARY KEY,
+    account_no BIGINT PRIMARY KEY,
     account_type VARCHAR(25) NOT NULL check(account_type='savings' or account_type = 'salary' or account_type= 'loan'),
     balance FLOAT NOT NULL check (balance >= 500.0),
     branch_id INT NOT NULL,
@@ -43,7 +43,7 @@ CREATE TABLE loan(
     loan_type VARCHAR(25) NOT NULL check(loan_type = 'personal' or loan_type = 'business' or loan_type = 'home' or loan_type = 'student' or loan_type = 'automobile'),
     amount FLOAT NOT NULL check(amount >= 1000.0),
     interest_rate FLOAT NOT NULL check(interest_rate >= 3.0 and interest_rate <= 12.5),
-    account_no INT NOT NULL,
+    account_no BIGINT NOT NULL,
     branch_id INT NOT NULL,
      CONSTRAINT acc_fk FOREIGN KEY (account_no)
     REFERENCES account (account_no),
@@ -57,7 +57,7 @@ CREATE TABLE customer(
     cust_name VARCHAR(100) NOT NULL,
     cust_address TEXT NOT NULL,
     cust_phoneno INT check (cust_phoneno >= 1000000000 AND cust_phoneno <= 9999999999),
-    account_no INT NOT NULL,
+    account_no BIGINT NOT NULL,
     
     CONSTRAINT account_fk FOREIGN KEY (account_no)
     REFERENCES account (account_no)
