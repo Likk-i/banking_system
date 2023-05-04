@@ -5,8 +5,6 @@ CREATE TABLE bank(
     bank_address TEXT NOT NULL,
     bank_name VARCHAR(100) NOT NULL
 );
-INSERT INTO bank (bank_address, bank_name) VALUES
-('palakkad','sbi');
 
 -- branch table
 CREATE TABLE branch(
@@ -17,9 +15,6 @@ CREATE TABLE branch(
     CONSTRAINT bran_fk FOREIGN KEY (bank_id)
     REFERENCES bank (bank_code)
 );
-INSERT INTO branch (branch_name, branch_address, bank_id) VALUES
-('Main Branch', '123 Main Street', 1);
-
 
 -- employee table
 CREATE TABLE employee(
@@ -32,7 +27,6 @@ CREATE TABLE employee(
     REFERENCES branch (branch_id)
 );
 
-
 -- account table
 CREATE TABLE account(
     account_no SERIAL PRIMARY KEY,
@@ -43,7 +37,7 @@ CREATE TABLE account(
     REFERENCES branch (branch_id)
 );
 
--- loan table 
+-- loan table
 CREATE TABLE loan(
     loan_id SERIAL PRIMARY KEY,
     loan_type VARCHAR(25) NOT NULL check(loan_type = 'personal' or loan_type = 'business' or loan_type = 'home' or loan_type = 'student' or loan_type = 'automobile'),
@@ -64,7 +58,6 @@ CREATE TABLE customer(
     cust_address TEXT NOT NULL,
     cust_phoneno INT check (cust_phoneno >= 1000000000 AND cust_phoneno <= 9999999999),
     account_no INT NOT NULL,
-    password not null,
     CONSTRAINT account_fk FOREIGN KEY (account_no)
     REFERENCES account (account_no)
 );
@@ -100,6 +93,8 @@ create table login(
    username varchar(100) primary key,
    id int ,
    password varchar(100) not null
+
+   
 );
 
 --roles for customer--not checked
@@ -177,7 +172,7 @@ RETURNS TABLE (
 )
 AS $show_payment_log$
 BEGIN
-    IF EXISTS (SELECT login_id FROM access WHERE username = uname AND password = pword) THEN
+    IF EXISTS (SELECT id FROM login WHERE username = uname AND password = pword) THEN
     BEGIN
         IF EXISTS (SELECT loan_id FROM payment WHERE loan_id = id) THEN
            RETURN QUERY
@@ -282,6 +277,10 @@ GROUP BY e.employee_id, e.employee_name;
 select  cust_name,loan.amount as Amount
 from customer inner join loan
 where loan.account_no=customer.account_no;
+--dummy data insertion and code generation for login okkk
+ 
+
+      
 --dummy data insertion and code generation for login okkk
  
  --trigger to set up login
