@@ -116,13 +116,42 @@ BEGIN
    END IF;
 END;
 $$ LANGUAGE plpgsql;
-
+--create a view for emplyee table
+CREATE FUNCTION create_employee_view(emp_id INTEGER)
+RETURNS VOID AS $$
+DECLARE
+    temp_balance NUMERIC(12,3);
+BEGIN
+    IF EXISTS (SELECT employee_id FROM employee WHERE employee_id = emp_id) THEN
+        EXECUTE 'CREATE OR REPLACE VIEW employee_customer_view AS
+        SELECT e.employee_id, e.employee_name, e.emp_address, e.emp_salary,
+               c.cust_id, c.cust_name, c.cust_address, c.cust_phoneno, c.account_no
+        FROM employee e
+        JOIN customer c ON e.employee_id = c.employee_id
+        WHERE e.employee_id = ' || emp_id || ''; 
+        RAISE NOTICE 'View has been created';
+    ELSE
+        RAISE NOTICE 'Employee does not exist';
+    END IF;
+END;
+----- view for loan payment
+CREATE VIEW loan_payment AS 
+SELECT loan.loan_id, payment.loan_id, loan.amount AS amount
+FROM loan
+JOIN payment ON loan.loan_id = payment.loan_id
+WHERE loan.amount >= 10000;
+create VIEW loan_account
+(
+    select account.account_no,account.amount,loan.amount as lamount
+    from loan ,account
+    where account.account_no=loan.account_no
+);
 -- function
 CREATE OR REPLACE FUNCTION view_balance(id int)
 RETURNS numeric(12,3)
 AS $$
 DECLARE
-   temp_balance numeric(12,3);
+   temp_balance numeric(14,2);
 BEGIN
     IF EXISTS (SELECT balance FROM account WHERE account_no = id) THEN
         SELECT balance INTO temp_balance FROM account WHERE account_no = id;
@@ -213,20 +242,7 @@ END;
 $$ LANGUAGE plpgsql;
    
   --views
-  
-CREATE VIEW loan_payment AS 
-SELECT loan.loan_id, payment.loan_id, loan.amount AS amount
-FROM loan
-JOIN payment ON loan.loan_id = payment.loan_id
 
----------
-WHERE loan.amount >= 10000;
-create VIEW loan_account
-(
-    select account.account_no,account.amount,loan.amount as lamount
-    from loan ,account
-    where account.account_no=loan.account_no
-);
 
 --roles
 CREATE ROLE branch_admin password 'branch_admin';
